@@ -11,6 +11,36 @@ export default function Home() {
   const [ringConnected, setRingConnected] = useState(false);
   const [ringMessage, setRingMessage] = useState("Checking Ring connection...");
   const [ringLoading, setRingLoading] = useState(true);
+  const [reloadCount, setReloadCount] = useState(0);
+  const [selectedCameraIds, setSelectedCameraIds] = useState<string[]>([]);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("ring-pet-watch-camera-ids");
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setSelectedCameraIds(parsed.filter((id): id is string => typeof id === "string"));
+        }
+      }
+    } catch {
+      // Browser storage can be unavailable; the app still works without it.
+    }
+    setPreferencesLoaded(true);
+  }, []);
+
+  function toggleCamera(id: string) {
+    setSelectedCameraIds((previous) => {
+      const next = previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id];
+      try {
+        window.localStorage.setItem("ring-pet-watch-camera-ids", JSON.stringify(next));
+      } catch {
+        // Browser-only preference; not a Ring authorization change.
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,7 +68,7 @@ export default function Home() {
     }
     void loadDevices();
     return () => controller.abort();
-  }, []);
+  }, [reloadCount]);
 
   const cats = [
     {
@@ -161,8 +191,42 @@ export default function Home() {
       {activeTab === "settings" && (
         <section>
           <h2>Settings</h2>
-          <p>Ring integration: {ringConnected ? "Account linked" : "Not linked or unavailable"}</p>
-          <p>Devices discovered: {ringDevices.length}</p>
+          <div style={{ background: "#1e293b", padding: "22px", borderRadius: "12px", maxWidth: "640px" }}>
+            <h3>Ring account connection</h3>
+            <p><strong>Status:</strong> {ringLoading ? "Checking..." : ringConnected ? "Linked in Ring Pet Watch" : "Not linked in Ring Pet Watch"}</p>
+            <p>{ringMessage}</p>
+            <p>Ring authorization is initiated through Ring. Approving this app in the developer console alone does not necessarily finish the token exchange and account claim required by this dashboard.</p>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <button type="button" onClick={() => {
+                setRingLoading(true);
+                setRingMessage("Checking Ring connection...");
+                setReloadCount((n) => n + 1);
+              }} style={{ background: "#2563eb", color: "white", border: 0, padding: "12px 16px", borderRadius: "8px", cursor: "pointer" }}>
+                Recheck Ring connection
+              </button>
+              <a href="https://developer.amazon.com/ring/console/apps" target="_blank" rel="noopener noreferrer"
+                style={{ background: "#334155", color: "white", padding: "12px 16px", borderRadius: "8px", textDecoration: "none" }}>
+                Open Ring Developer Console
+              </a>
+            </div>
+          </div>
+          <div style={{ background: "#1e293b", padding: "22px", borderRadius: "12px", maxWidth: "640px", marginTop: "20px" }}>
+            <h3>Choose cameras for Pet Watch</h3>
+            <p>Only cameras authorized by Ring can appear here. Selecting a camera saves a preference in this browser; animal monitoring is not active yet.</p>
+            {ringLoading ? <p>Loading available cameras...</p> : ringDevices.length ? (
+              <div style={{ display: "grid", gap: "12px" }}>
+                {ringDevices.map((camera) => (
+                  <label key={camera.id} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                    <input type="checkbox" disabled={!preferencesLoaded}
+                      checked={selectedCameraIds.includes(camera.id)}
+                      onChange={() => toggleCamera(camera.id)} />
+                    {camera.name}
+                  </label>
+                ))}
+              </div>
+            ) : <p>No cameras available yet. Complete Ring account linking first, then select Recheck Ring connection.</p>}
+            <p><small>Saved in this browser only. This does not grant or revoke Ring permissions.</small></p>
+          </div>
           <p>Cat recognition: Not configured</p>
           <p>Behavior alerts: Not configured</p>
         </section>
