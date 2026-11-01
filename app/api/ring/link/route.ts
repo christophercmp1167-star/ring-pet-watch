@@ -126,10 +126,7 @@ export async function POST(request: NextRequest) {
 
   const sql = neon(databaseUrl);
   try {
-    const rows = await sql(
-      "SELECT ring_account_id, access_token_encrypted, expires_at FROM ring_oauth_tokens WHERE claimed_at IS NULL",
-      []
-    );
+    const rows = await sql`SELECT ring_account_id, access_token_encrypted, expires_at FROM ring_oauth_tokens WHERE claimed_at IS NULL`;
     const received = Buffer.from(nonce, "base64url");
     let match: (typeof rows)[number] | undefined;
     for (const row of rows) {
@@ -175,10 +172,7 @@ export async function POST(request: NextRequest) {
     if (!complete.ok) {
       return page("Link not completed", "<p>Ring accepted verification but could not finish activation. Contact support before retrying.</p>", 502);
     }
-    await sql(
-      "UPDATE ring_oauth_tokens SET claimed_at = NOW(), updated_at = NOW() WHERE ring_account_id = $1 AND claimed_at IS NULL",
-      [match.ring_account_id]
-    );
+    await sql`UPDATE ring_oauth_tokens SET claimed_at = NOW(), updated_at = NOW() WHERE ring_account_id = ${match.ring_account_id} AND claimed_at IS NULL`;
     return page("Ring connected", '<p>Your Ring account is linked to Ring Pet Watch.</p>' +
       '<a class="button" href="/">Open dashboard</a>');
   } catch {
