@@ -1,65 +1,127 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  const cats = [
+    {
+      name: "Oliver",
+      color: "Orange",
+      emoji: "🐈",
+      status: "Not connected",
+    },
+    {
+      name: "Skittles",
+      color: "Dark",
+      emoji: "🐈‍⬛",
+      status: "Not connected",
+    },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#101827",
+        color: "white",
+        fontFamily: "Arial, sans-serif",
+        padding: "30px",
+      }}
+    >
+      <header style={{ marginBottom: "30px" }}>
+        <h1>🐾 Ring Pet Watch</h1>
+        <p>AI-Powered Cat Recognition & Behavior Monitoring</p>
+      </header>
+
+      <nav style={{ marginBottom: "30px" }}>
+        {["dashboard", "activity", "settings"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: "12px 18px",
+              marginRight: "10px",
+              marginBottom: "10px",
+              background:
+                activeTab === tab ? "#2563eb" : "#273449",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              textTransform: "capitalize",
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {tab}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === "dashboard" && (
+        <>
+          <h2>My Cats</h2>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              flexWrap: "wrap",
+            }}
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            {cats.map((cat) => (
+              <section
+                key={cat.name}
+                style={{
+                  background: "#1e293b",
+                  padding: "25px",
+                  borderRadius: "12px",
+                  width: "260px",
+                }}
+              >
+                <div style={{ fontSize: "50px" }}>
+                  {cat.emoji}
+                </div>
+
+                <h2>{cat.name}</h2>
+                <p>Coat: {cat.color}</p>
+                <p>Recognition: {cat.status}</p>
+                <p>Behavior monitoring: Pending</p>
+              </section>
+            ))}
+          </div>
+
+          <section style={{ marginTop: "35px" }}>
+            <h2>📹 Ring Camera</h2>
+            <p>No camera connected yet.</p>
+          </section>
+
+          <section style={{ marginTop: "35px" }}>
+            <h2>🧠 Behavior Analysis</h2>
+            <p>
+              Behavior monitoring will become available
+              after camera integration and recognition
+              are configured.
+            </p>
+          </section>
+        </>
+      )}
+
+      {activeTab === "activity" && (
+        <section>
+          <h2>Activity History</h2>
+          <p>No activity recorded yet.</p>
+        </section>
+      )}
+
+      {activeTab === "settings" && (
+        <section>
+          <h2>Settings</h2>
+          <p>Ring integration: Not configured</p>
+          <p>Cat recognition: Not configured</p>
+          <p>Behavior alerts: Not configured</p>
+        </section>
+      )}
+    </main>
   );
 }
