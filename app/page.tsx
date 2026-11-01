@@ -1,9 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type RingDevice = { id: string; name: string; type: string };
+type DevicesResult = { connected?: boolean; devices?: RingDevice[]; message?: string; error?: string };
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [ringDevices, setRingDevices] = useState<RingDevice[]>([]);
+  const [ringConnected, setRingConnected] = useState(false);
+  const [ringMessage, setRingMessage] = useState("Checking Ring connection...");
+  const [ringLoading, setRingLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadDevices() {
+      try {
+        const response = await fetch("/api/ring/devices", {
+          signal: controller.signal, cache: "no-store"
+        });
+        const result = (await response.json()) as DevicesResult;
+        if (!response.ok) {
+          setRingMessage(result.error || "Unable to load Ring cameras.");
+          return;
+        }
+        setRingConnected(Boolean(result.connected));
+        setRingDevices(result.devices || []);
+        setRingMessage(result.message ||
+          (result.connected ? "Devices authorized through Ring" : "Ring is not linked yet."));
+      } catch {
+        if (!controller.signal.aborted) {
+          setRingMessage("Unable to contact Ring Pet Watch. Try refreshing the page.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setRingLoading(false);
+      }
+    }
+    void loadDevices();
+    return () => controller.abort();
+  }, []);
 
   const cats = [
     {
@@ -93,7 +128,16 @@ export default function Home() {
 
           <section style={{ marginTop: "35px" }}>
             <h2>📹 Ring Camera</h2>
-            <p>No camera connected yet.</p>
+            <p>{ringMessage}</p>
+            {ringLoading ? (
+              <p>Loading devices...</p>
+            ) : ringDevices.length ? (
+              <ul style={{ paddingLeft: "22px", lineHeight: "2" }}>
+                {ringDevices.map((device) => (
+                  <li key={device.id}>{device.name}</li>
+                ))}
+              </ul>
+            ) : null}
           </section>
 
           <section style={{ marginTop: "35px" }}>
@@ -117,7 +161,8 @@ export default function Home() {
       {activeTab === "settings" && (
         <section>
           <h2>Settings</h2>
-          <p>Ring integration: Not configured</p>
+          <p>Ring integration: {ringConnected ? "Account linked" : "Not linked or unavailable"}</p>
+          <p>Devices discovered: {ringDevices.length}</p>
           <p>Cat recognition: Not configured</p>
           <p>Behavior alerts: Not configured</p>
         </section>
